@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Project Glorp — The Glorp Launcher</title>
+<meta name="description" content="Glorp Launcher: your builds, item shop, arena leaderboard and friends in one gold-plated command center." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,800;1,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0b0907; --bg2:#110e09; --surface:rgba(255,255,255,.04); --border:rgba(245,197,66,.12);
+    --gold:#f5c542; --gold2:#d4a017; --text:#f5f1e8; --muted:#a8a29e; --green:#4ade80;
+    --grad:linear-gradient(135deg,#f5c542,#d4a017); --hl:linear-gradient(90deg,#ff8a5b,#ff6b9a,#ff8a5b); --r:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html{scroll-behavior:smooth}
+  body{background:linear-gradient(180deg,#0b0907,#110e09) fixed;color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  h1,h2,h3,.display{font-family:"Archivo Black",Archivo,sans-serif;font-weight:400;line-height:1.05;letter-spacing:-.02em}
+  .italic{font-style:italic;font-weight:900;text-transform:uppercase}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+  section{padding:120px 0;position:relative;z-index:2;background:transparent}
+  header,footer,.drawer{position:relative;z-index:3}
+  .eyebrow{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .muted{color:var(--muted)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);transition:box-shadow .3s,border-color .3s;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .card:hover{box-shadow:inset 0 0 40px rgba(245,197,66,.08);border-color:rgba(245,197,66,.3)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;border:1px solid transparent;transition:.2s;font-family:inherit}
+  .btn-gold{background:var(--grad);color:#1a1400;box-shadow:0 10px 30px -10px rgba(245,197,24,.6)}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 40px -10px rgba(245,197,24,.8)}
+  .btn-ghost{border-color:var(--border);color:var(--text);background:transparent}
+  .btn-ghost:hover{border-color:var(--gold)}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  /* nav */
+  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(13,11,7,.7);border-bottom:1px solid var(--border)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo{font-family:Archivo;font-weight:900;font-style:italic;font-size:20px;letter-spacing:-.02em}
+  .logo span{color:var(--gold)}
+  .links{display:flex;gap:32px;font-size:15px;color:var(--muted)}
+  .links a:hover{color:var(--text)}
+  .nav-cta{display:flex;gap:10px}
+  .burger{display:none;background:none;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 10px;cursor:pointer}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:280px;background:var(--bg2);border-left:1px solid var(--border);padding:80px 28px;transform:translateX(100%);transition:.35s;z-index:60;display:flex;flex-direction:column;gap:22px}
+  .drawer.open{transform:none}
+  @media (max-width:900px){.links,.nav-cta{display:none}.burger{display:block}}
+
+  /* hero */
+  .hero{padding:110px 0 120px;text-align:center;overflow:hidden}
+  .hero::before{content:"";position:absolute;left:-10%;top:-20%;width:900px;height:700px;background:radial-gradient(closest-side,rgba(212,160,23,.18),transparent);pointer-events:none}
+  .hero .wrap,.cta .wrap{position:relative;z-index:2}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--border);border-radius:99px;font-size:13px;background:var(--surface);margin-bottom:28px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--grad);box-shadow:0 0 10px var(--gold)}
+  .hero h1{font-size:clamp(40px,6vw,72px);line-height:1.05;max-width:960px;margin:0 auto}
+  .hero p.sub{max-width:560px;margin:24px auto 36px;color:var(--muted)}
+  .hero .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .search{position:relative;max-width:620px;margin:44px auto 0;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px;border:1px solid var(--border);border-radius:16px;background:rgba(0,0,0,.4)}
+  .search svg{flex-shrink:0;color:var(--gold)}
+  .search input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:16px;outline:none;padding:10px 0}
+  .search .overlay{position:absolute;left:52px;right:70px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);white-space:nowrap;overflow:hidden;text-align:left;font-size:16px}
+  .assistant-results{max-width:780px;margin:14px auto 0;padding:18px;border:1px solid var(--border);border-radius:16px;background:rgba(10,8,5,.88);text-align:left}
+  .assistant-config{margin-top:8px!important}
+  .assistant-config a,.assistant-source{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+  .assistant-conversation{display:grid;gap:14px;margin-top:14px}
+  .assistant-conversation{max-height:600px;overflow-y:auto}
+  .assistant-turn{padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.025)}
+  .assistant-question{color:var(--gold);font-weight:700;margin-bottom:8px!important}
+  .assistant-turn-answer{white-space:pre-wrap;line-height:1.65}
+  .assistant-sources{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .assistant-source{font-size:13px}
+  .assistant-match-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0 0;padding:0;list-style:none}
+  .assistant-item-button{display:flex;align-items:center;gap:10px;width:100%;height:100%;padding:8px;text-align:left;color:var(--text);font:inherit;cursor:pointer}
+  .assistant-item-button:hover{border-color:var(--gold)}
+  .assistant-item-button img{width:54px;height:54px;object-fit:cover;border-radius:9px;background:#1b1710}
+  .assistant-clear{margin-top:12px;padding:6px 10px;color:var(--muted);border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer}
+  .cosmetic-dialog{width:min(900px,calc(100% - 28px));max-height:90vh;margin:auto;padding:0;color:var(--text);background:#15130f;border:1px solid var(--border);border-radius:18px}
+  .cosmetic-dialog::backdrop{background:rgba(0,0,0,.8);backdrop-filter:blur(5px)}
+  .cosmetic-detail{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr);min-height:440px}
+  .cosmetic-detail-image{display:grid;place-items:center;min-height:320px;background:linear-gradient(135deg,#0c1d38,#15130f)}
+  .cosmetic-detail-image img{width:100%;height:100%;max-height:650px;object-fit:contain}
+  .cosmetic-detail-copy{padding:28px;overflow-y:auto}
+  .cosmetic-detail-close{float:right;border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:transparent;color:var(--text);cursor:pointer}
+  .cosmetic-variants{display:grid;gap:10px;margin-top:18px}
+  .cosmetic-variant{padding:10px;border:1px solid var(--border);border-radius:10px}
+  .cosmetic-variant-options{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .cosmetic-variant-option{padding:4px 8px;border-radius:6px;background:var(--surface);font-size:12px}
+  @media(max-width:640px){.cosmetic-detail{grid-template-columns:1fr}.cosmetic-detail-image{min-height:260px}.cosmetic-detail-copy{padding:20px}}
+  .community-player-list{display:grid;gap:8px;margin:14px 0 0;padding:0;list-style:none}
+  .assistant-results h2{font-size:14px;color:var(--gold);margin-bottom:8px}
+  .assistant-results p{margin:0;color:var(--muted);font-size:14px}
+  .assistant-results ul{display:grid;gap:8px;margin:12px 0 0;padding:0;list-style:none}
+  .assistant-result{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+  .assistant-result img{width:42px;height:42px;border-radius:8px;object-fit:cover;background:#1b1710}
+  .assistant-result small{display:block;color:var(--muted)}
+  .online-dot{color:var(--green)}
+  .overlay span{display:inline-block;animation:letter .7s cubic-bezier(.22,1,.36,1) both;white-space:pre}
+  .overlay span.out{animation:letterOut .35s ease-in forwards}
+  @keyframes letter{0%{opacity:0;transform:translate(-10px,8px) scale(.6);filter:blur(6px);color:var(--gold)}60%{color:var(--gold);text-shadow:0 0 12px var(--gold)}100%{opacity:1;transform:none;filter:blur(0)}}
+  @keyframes letterOut{to{opacity:0;transform:translateY(-8px);filter:blur(4px)}}
+  .overlay::after{content:"";display:inline-block;width:2px;height:1.1em;vertical-align:middle;background:var(--gold);margin-left:2px;box-shadow:0 0 8px var(--gold);animation:caret 1s steps(1) infinite}
+  @keyframes caret{50%{opacity:0}}
+  .search button{flex-shrink:0;width:44px;height:44px;border-radius:12px;border:0;background:var(--grad);color:#1a1400;cursor:pointer;display:grid;place-items:center}
+  .float{position:absolute;z-index:0;opacity:.28;pointer-events:none;animation:bob 7s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-18px) rotate(12deg)}}
+
+
+  /* launcher mockup */
+  .frame{position:relative;border-radius:22px;border:1px solid var(--border);background:linear-gradient(180deg,#16130b,#0f0d08);overflow:hidden;box-shadow:0 40px 120px -40px rgba(245,197,24,.25)}
+  .titlebar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:800;font-family:Archivo}
+  .titlebar i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#3a3320;margin-left:6px}
+  .app{display:grid;grid-template-columns:56px 1fr;min-height:440px}
+  .rail{border-right:1px solid var(--border);display:flex;flex-direction:column;gap:12px;padding:14px 8px;align-items:center}
+  .rail button{width:38px;height:38px;border-radius:10px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+  .rail button.on{border-color:var(--gold);color:var(--gold);background:rgba(245,197,24,.1)}
+  .pane{padding:26px;display:none}
+  .pane.on{display:block;animation:fade .4s}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}}
+  .banner{border-radius:16px;padding:28px;background:linear-gradient(120deg,#1d3a6b,#3a1d4f 60%,#5b2a1a);position:relative;overflow:hidden;margin:14px 0}
+  .banner h3{font-size:34px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .stat{padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface)}
+  .stat small{font-size:10px;letter-spacing:.15em;color:var(--muted);font-weight:700;display:block}
+  .stat b{font-family:Archivo}
+  table{width:100%;border-collapse:collapse;margin-top:16px}
+  th{font-size:10px;letter-spacing:.2em;color:var(--muted);text-align:left;padding:10px}
+  td{padding:12px 10px;border-top:1px solid var(--border);font-weight:600}
+  td.hype{text-align:right;font-family:Archivo;font-weight:800}
+  .div{font-family:Archivo;font-style:italic;font-weight:900;color:var(--muted)}
+  .div b{color:var(--text)}
+  .skins{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .skin{border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  .skin .art{height:140px;display:grid;place-items:center;font-size:44px}
+  .skin .meta{padding:10px 12px;background:#0f0d08;font-size:13px}
+  .skin .meta small{font-size:10px;letter-spacing:.15em;font-weight:800}
+  .shop-status{margin-top:12px;font-size:13px}
+  .shop-filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .shop-filters button{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+  .shop-filters button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:rgba(245,197,24,.1)}
+  .skins.live-shop{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));max-height:490px;overflow:auto;padding-right:4px}
+  .live-skin .art{height:150px;background:linear-gradient(160deg,#39301b,#15120c);padding:8px}
+  .live-skin .art img{width:100%;height:100%;object-fit:contain}
+  .live-skin .meta{min-height:76px}
+  .live-skin .meta small{color:var(--gold)}
+  .leaderboard-scroll{overflow-x:auto}
+  #board table{min-width:470px}
+  #leaderboard-status{margin-top:12px;font-size:13px}
+  .uncommon{background:linear-gradient(160deg,#2f9a68,#13583b)} .epic{background:linear-gradient(160deg,#9b3ec4,#4b1a73)} .rare{background:linear-gradient(160deg,#2a7fd6,#123f7a)}
+  @media (max-width:760px){.stats,.skins{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:1fr}.rail{flex-direction:row;justify-content:center;border-right:0;border-bottom:1px solid var(--border)}}
+
+  /* grids */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media (max-width:1024px){.grid3{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:640px){.grid3{grid-template-columns:1fr}section{padding:80px 0}}
+  .feature{padding:28px}
+  .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(245,197,24,.12);color:var(--gold);margin-bottom:18px;border:1px solid rgba(245,197,24,.25)}
+  .feature h3{font-size:20px;margin-bottom:8px}
+  .section-head{text-align:center;max-width:640px;margin:0 auto 56px}
+  .section-head h2{font-size:clamp(32px,4.5vw,52px);margin:12px 0}
+  .themes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+  .themes button{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .themes button.on{border-color:var(--text)}
+
+  .steps{position:relative}
+  .steps::before{content:"";position:absolute;top:50%;left:8%;right:8%;height:1px;background:var(--grad);opacity:.4}
+  .step{padding:32px;position:relative;background:rgba(17,14,9,.85)}
+  .step .n{font-family:Archivo;font-size:64px;font-weight:900;color:rgba(245,197,24,.15);line-height:1}
+  @media (max-width:1024px){.steps::before{display:none}}
+
+  .cta{text-align:center;overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .cta::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(245,197,24,.18),transparent 60%)}
+  .cta h2{font-size:clamp(36px,5vw,60px)}
+
+  footer{padding:70px 0 40px;color:var(--muted);font-size:14px}
+  .fcols{display:grid;grid-template-columns:1.5fr repeat(4,1fr);gap:32px}
+  .fcols h4{color:var(--text);font-size:14px;margin-bottom:14px}
+  .fcols a{display:block;margin-bottom:8px}
+  .fcols a:hover{color:var(--gold)}
+  .fbot{display:flex;justify-content:space-between;align-items:center;margin-top:50px;padding-top:24px;border-top:1px solid var(--border);flex-wrap:wrap;gap:16px}
+  .social{display:flex;gap:12px}
+  .social a{width:36px;height:36px;border:1px solid var(--border);border-radius:10px;display:grid;place-items:center}
+  @media (max-width:760px){.fcols{grid-template-columns:1fr 1fr}}
+
+  .glows{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60vmax 45vmax at 10% 5%,rgba(212,160,23,.18),transparent 70%),radial-gradient(60vmax 50vmax at 85% 95%,rgba(120,60,140,.15),transparent 70%)}
+  #stars{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1}
+  .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .aurora i{position:absolute;width:50vmax;height:50vmax;border-radius:50%;filter:blur(110px);opacity:.16;animation:drift 22s ease-in-out infinite alternate}
+  .aurora i:nth-child(1){background:#f5c518;left:-10%;top:-10%}
+  .aurora i:nth-child(2){background:#ff6b3d;right:-15%;top:20%;animation-delay:-6s}
+  .aurora i:nth-child(3){background:#ec4899;left:20%;bottom:-25%;animation-delay:-12s}
+  .aurora i:nth-child(4){background:#38bdf8;right:10%;bottom:-20%;animation-delay:-3s;opacity:.1}
+  @keyframes drift{50%{transform:translate(10vw,8vh) scale(1.2)}100%{transform:translate(-8vw,-6vh) scale(.9)}}
+  body{background:var(--bg)}
+  .grad-text{background:var(--hl);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 6s linear infinite;filter:drop-shadow(0 0 18px rgba(255,107,154,.3))}
+  @keyframes shimmer{to{background-position:200% 0}}
+  .btn{position:relative;overflow:hidden}
+  .btn-gold::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-120%);animation:sheen 3.5s ease-in-out infinite}
+  @keyframes sheen{60%,100%{transform:translateX(120%)}}
+  .card{position:relative}
+  .card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),rgba(255,216,77,.9),rgba(255,95,162,.5) 40%,transparent 70%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .3s;pointer-events:none}
+  .card:hover::before{opacity:1}
+  .icon{animation:pulse 3s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 24px rgba(245,197,24,.45)}}
+  .hero h1 .w{display:inline-block;animation:rise 1s cubic-bezier(.22,1,.36,1) both}
+  .hero h1 .grad-text.w{animation:rise 1s cubic-bezier(.22,1,.36,1) both,shimmer 6s linear infinite}
+  @keyframes rise{from{opacity:0;transform:translateY(40px) rotateX(60deg);filter:blur(10px)}}
+  #intro{position:fixed;inset:0;z-index:200;background:var(--bg);display:grid;place-items:center;animation:introOut .8s 1.1s ease forwards}
+  #intro .logo{font-size:44px;animation:introLogo 1.1s cubic-bezier(.22,1,.36,1) both;text-shadow:0 0 40px rgba(245,197,24,.6)}
+  @keyframes introLogo{from{opacity:0;letter-spacing:.4em;filter:blur(12px)}}
+  @keyframes introOut{to{opacity:0;visibility:hidden}}
+  .reveal{filter:blur(8px)} .reveal.in{filter:none}
+  .scrollbar{position:fixed;top:0;left:0;height:3px;z-index:70;background:linear-gradient(90deg,#ffd84d,#ff8a3d,#ff5fa2,#38bdf8);box-shadow:0 0 12px #ff8a3d;width:0}
+  /* 3D tilt: outer reveal > .tilt-p (perspective) > .tilt-s (surface) */
+  .tilt-o{display:flex}.tilt-p{perspective:900px;flex:1;display:flex}
+  .tilt-s{flex:1;overflow:hidden;transform:rotateX(0) rotateY(0);transition:transform .4s ease-out,box-shadow .3s,border-color .3s}
+  .tilt-s.hov{transition:transform .15s ease-out,box-shadow .3s,border-color .3s}
+  .sheen{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(circle at var(--sheen-x,50%) var(--sheen-y,50%),rgba(255,245,225,.16),transparent 55%);z-index:5}
+  .tilt-s.hov .sheen{opacity:1}
+  /* donate */
+  .packs{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  @media (max-width:1024px){.packs{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.packs{grid-template-columns:1fr}}
+  .pack{padding:30px 24px;text-align:center;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+  .pack .badge{width:72px;height:72px;margin:0 auto;border-radius:20px;display:grid;place-items:center;font-size:34px;background:var(--pc);box-shadow:0 0 40px -6px var(--pc);animation:bob 5s ease-in-out infinite}
+  .pack h3{font-size:22px;text-transform:uppercase;font-style:italic;font-weight:900}
+  .pack .price{font-family:Archivo;font-weight:900;font-size:46px;line-height:1;background:var(--pc);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .pack .price small{font-size:16px}
+  .pack ul{list-style:none;font-size:14px;color:var(--muted);text-align:left;display:grid;gap:6px;flex:1}
+  .pack li::before{content:"✦ ";color:var(--gold)}
+  .pack .btn{justify-content:center;background:var(--grad);color:#140f00}
+  .pack.pop{border-color:rgba(255,95,162,.5);box-shadow:0 0 60px -20px #ff5fa2}
+  .pack .tag{position:absolute;top:14px;right:-34px;transform:rotate(45deg);background:linear-gradient(90deg,#ff5fa2,#ff8a3d);color:#140f00;font-size:10px;font-weight:800;letter-spacing:.15em;padding:4px 40px}
+  .store-status{max-width:760px;margin:24px auto 0;padding:14px 18px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--muted);text-align:center}
+  .pack .buy-pack:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+  .account-overlay{position:fixed;inset:0;z-index:79;border:0;background:rgba(0,0,0,.68);backdrop-filter:blur(5px);opacity:0;transition:opacity .25s}
+  .account-overlay.open{opacity:1}
+  .account-menu{position:fixed;inset:0 0 0 auto;z-index:80;display:flex;flex-direction:column;width:min(440px,100%);padding:24px;background:linear-gradient(160deg,#18140c,#0d0b08 58%);border-left:1px solid rgba(245,197,66,.22);box-shadow:-24px 0 80px rgba(0,0,0,.45);transform:translateX(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);visibility:hidden}
+  .account-menu.open{transform:translateX(0);visibility:visible}
+  .account-menu-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:4px 0 20px;border-bottom:1px solid var(--border)}
+  .account-menu-heading{font-size:24px}
+  .account-menu-close{display:grid;place-items:center;width:40px;height:40px;flex:none;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.03);color:var(--text);font-size:22px;cursor:pointer}
+  .account-summary{display:flex;align-items:center;gap:14px;padding:20px 0}
+  .account-avatar{display:grid;place-items:center;width:48px;height:48px;flex:none;border-radius:16px;background:var(--grad);color:#1a1400;font-family:Archivo;font-size:20px;font-weight:900}
+  .account-identity{min-width:0}
+  .account-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+  .account-caption{font-size:13px;color:var(--muted)}
+  .account-menu-nav{display:grid;gap:7px;padding:0 0 18px;border-bottom:1px solid var(--border)}
+  .account-menu-link{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid transparent;border-radius:12px;color:var(--muted);font-size:15px;transition:background .2s,border-color .2s,color .2s}
+  .account-menu-link:hover,.account-menu-link:focus-visible{border-color:var(--border);background:rgba(245,197,66,.07);color:var(--text)}
+  .account-menu-link span:first-child{width:22px;text-align:center;color:var(--gold)}
+  .account-menu-content{min-height:0;flex:1;overflow-y:auto;padding-top:20px;overscroll-behavior:contain}
+  .account-section-title{margin-bottom:5px;font-size:19px}
+  .account-menu-status{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .account-gift-form{display:grid;gap:12px;margin:4px 0 18px;padding:16px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.035)}
+  .account-gift-toggle{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:600;cursor:pointer}
+  .account-gift-toggle input{width:18px;height:18px;accent-color:var(--gold)}
+  .account-gift-fields{display:grid;gap:10px}
+  .account-gift-fields[hidden]{display:none}
+  .account-gift-fields label{font-size:13px;color:var(--muted)}
+  .account-gift-fields input{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:#090806;color:var(--text);font:inherit}
+  .account-gift-fields input:focus{outline:2px solid rgba(245,197,66,.55);outline-offset:1px}
+  .account-gift-recipient,.account-gift-error{margin:0;font-size:13px}
+  .account-gift-recipient{color:var(--gold)}
+  .account-gift-error{color:#ff9c91}
+  .account-gift-buttons{display:flex;flex-wrap:wrap;gap:9px}
+  .account-gift-buttons .btn{flex:1;justify-content:center}
+  .gift-pack{margin-top:9px}
+  .account-order-list{display:grid;gap:12px;padding-bottom:14px}
+  .account-order-card{padding:16px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.035)}
+  .pack .gift-pack{border:1px solid var(--border);background:transparent;color:var(--text)}
+  .pack .gift-pack:hover{border-color:var(--gold);background:rgba(245,197,66,.08)}
+  .account-order-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .account-order-title{font-size:15px;font-weight:700}
+  .account-order-date{color:var(--muted);font-size:12px}
+  .account-order-status{display:inline-flex;align-items:center;gap:6px;margin:12px 0 10px;padding:4px 9px;border:1px solid rgba(245,197,66,.2);border-radius:99px;color:var(--gold);font-size:12px}
+  .account-order-code{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border:1px solid rgba(245,197,66,.18);border-radius:10px;background:#090806}
+  .account-order-code code{overflow-wrap:anywhere;color:#ffdc73;font:600 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em}
+  .account-copy-code{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(245,197,66,.08);color:var(--text);font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
+  .account-copy-code:hover{border-color:var(--gold)}
+  .account-signout{width:100%;justify-content:center;margin-top:16px}
+  body.account-menu-open{overflow:hidden}
+  .static-host-notice{position:relative;z-index:4;padding:12px 20px;border-bottom:1px solid rgba(245,197,66,.25);background:rgba(245,197,66,.08);color:var(--text);text-align:center;font-size:14px}
+  .static-host-notice strong{color:var(--gold)}
+  @media(max-width:560px){.account-menu{padding:18px}.account-menu-heading{font-size:21px}.account-order-code{align-items:flex-start;flex-direction:column}}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="glows" aria-hidden="true"></div>
+<canvas id="stars" aria-hidden="true"></canvas>
+<div id="intro" aria-hidden="true"><div class="logo">Project <span>Glorp</span></div></div>
+
+<div class="scrollbar" id="sb" aria-hidden="true"></div>
+<header>
+  <nav class="wrap" aria-label="Main">
+    <a href="#" class="logo">Project <span>Glorp</span></a>
+    <div class="links"><a href="#features">Features</a><a href="#launcher">Launcher</a><a href="#how">How it works</a><a href="#community">Community</a><a href="#donate">Donate</a></div>
+    <div class="nav-cta"><a class="btn btn-ghost" id="nav-login" href="./login/">Log in</a><button class="btn btn-ghost" id="nav-account" type="button" aria-controls="account-menu" aria-expanded="false" hidden></button><a class="btn btn-gold" href="./download/">Download</a></div>
+    <button class="burger" aria-label="Open menu" aria-expanded="false" id="burger">☰</button>
+  </nav>
+</header>
+<aside class="drawer" id="drawer" aria-label="Mobile menu">
+  <a href="#features">Features</a><a href="#launcher">Launcher</a><a href="#how">How it works</a><a href="#community">Community</a><a href="#donate">Donate</a>
+  <a class="btn btn-ghost" id="drawer-login" href="./login/">Log in</a><button class="btn btn-ghost" id="drawer-account" type="button" aria-controls="account-menu" aria-expanded="false" hidden></button><a class="btn btn-gold" href="./download/">Download</a>
+</aside>
+<button class="account-overlay" id="account-overlay" type="button" aria-label="Close account menu" hidden></button>
+<aside class="account-menu" id="account-menu" role="dialog" aria-modal="true" aria-label="Account and purchases" aria-hidden="true" tabindex="-1" inert>
+  <div class="account-menu-header">
+    <div><div class="eyebrow">Project Glorp</div><h2 class="account-menu-heading">Your account</h2></div>
+    <button class="account-menu-close" id="account-menu-close" type="button" aria-label="Close account menu">×</button>
+  </div>
+  <div class="account-summary">
+    <div class="account-avatar" id="account-avatar" aria-hidden="true">G</div>
+    <div class="account-identity">
+      <div class="account-name" id="account-name">Sign in to your account</div>
+      <div class="account-caption" id="account-caption">Discord account &amp; rewards</div>
+    </div>
+  </div>
+  <nav class="account-menu-nav" aria-label="Account menu">
+    <a class="account-menu-link" href="#features" data-account-close><span>⌂</span><span>Overview</span></a>
+    <a class="account-menu-link" href="#donate" data-account-close><span>✦</span><span>Supporter packs</span></a>
+    <a class="account-menu-link" href="#community" data-account-close><span>◎</span><span>Community</span></a>
+  </nav>
+  <div class="account-menu-content" id="account-purchases">
+    <h3 class="account-section-title">Purchases &amp; codes</h3>
+    <p class="account-menu-status" id="store-orders-status" role="status" aria-live="polite">Sign in with the Discord account used at checkout to view your codes.</p>
+    <div class="account-order-list" id="store-orders-list" aria-live="polite"></div>
+    <a class="btn btn-gold" id="account-menu-login" href="./login/">Sign in with Discord</a>
+    <button class="btn btn-ghost account-signout" id="account-menu-logout" type="button" hidden>Sign out</button>
+  </div>
+</aside>
+
+<div class="static-host-notice" role="status"><strong>Static website is live.</strong> Account login, live data, the AI search, store, and gifting need the separate backend and are not available on this Pages site yet.</div>
+<main>
+<section class="hero" aria-labelledby="hero-title">
+  <svg class="float" style="left:8%;top:22%" width="90" height="90" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="#d4a017" stroke-width="14"/></svg>
+  <svg class="float" style="right:9%;top:30%;animation-delay:-2s" width="70" height="70" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 0 L60 40 L100 50 L60 60 L50 100 L40 60 L0 50 L40 40Z" fill="#f5c542"/></svg>
+  <svg class="float" style="right:20%;bottom:12%;animation-delay:-4s" width="60" height="60" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 5 L90 40 L50 95 L10 40Z" fill="#8a6d12"/></svg>
+  <div class="wrap">
+    <div class="pill"><span class="dot"></span>New: Launcher 24.0 with Bubble Builds</div>
+    <h1 id="hero-title">Your game, your way.<br/>Welcome to <span class="grad-text">Project Glorp</span>.</h1>
+    <p class="sub">One gold-plated command center for your Fortnite builds, a daily item shop, an arena leaderboard and your friends.</p>
+    <div class="btns">
+      <a class="btn btn-gold" href="./download/">▶ Download launcher</a>
+      <a class="btn btn-ghost" href="#launcher">Take a tour</a>
+    </div>
+    <p id="login-status" class="muted" role="status" aria-live="polite" hidden></p>
+    <form class="search" id="heroSearch" role="search" onsubmit="event.preventDefault()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <label for="q" class="sr-only">Ask the AI assistant or search Fortnite cosmetics</label>
+      <input id="q" type="text" autocomplete="off" placeholder="Ask anything or look up a Fortnite skin…" aria-describedby="assistant-hint" />
+      <div class="overlay" aria-hidden="true" data-type="hero"></div>
+      <button type="submit" aria-label="Search">→</button>
+    </form>
+    <div class="assistant-results" id="assistant-results" aria-live="polite" hidden>
+      <h2>Glorp AI</h2>
+      <p id="assistant-hint">Ask general questions, look up public reference information, or search the Fortnite cosmetic catalog. AI answers use Gemini.</p>
+      <p class="assistant-config" id="assistant-config" hidden>AI setup needs a free Gemini API key on the backend. <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Get a key from Google AI Studio</a>.</p>
+      <div id="assistant-conversation" class="assistant-conversation"></div>
+      <div id="assistant-answer" role="status" hidden></div>
+      <ul id="assistant-matches" class="assistant-match-list" hidden></ul>
+      <button type="button" id="assistant-clear" class="assistant-clear">Clear chat</button>
+    </div>
+  </div>
+</section>
+<dialog class="cosmetic-dialog" id="cosmetic-dialog" aria-labelledby="cosmetic-title">
+  <div id="cosmetic-detail-content"></div>
+</dialog>
+
+<section id="launcher" aria-labelledby="l-title">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Desktop launcher preview</div><h2 id="l-title" class="italic">See the<br/><span class="grad-text">launcher</span></h2><p class="muted">This is a website preview. Installed builds and launch controls are available in the desktop app; the shop and leaderboard below use live backend data.</p></div>
+    <div class="frame reveal">
+      <div class="titlebar"><span>Glorp Launcher</span><span><i></i><i></i><i></i></span></div>
+      <div class="app">
+        <div class="rail" role="tablist" aria-label="Launcher pages">
+          <button class="on" data-pane="home" aria-label="Home">⌂</button>
+          <button data-pane="shop" aria-label="Item shop">🛒</button>
+          <button data-pane="board" aria-label="Leaderboard">🏆</button>
+        </div>
+        <div>
+          <div class="pane on" id="home">
+            <div class="eyebrow">Command center</div>
+            <h3 style="font-size:28px">Your command center</h3>
+            <div class="banner"><div class="eyebrow">● Desktop app preview</div><h3>Fortnite 19.10</h3><p style="opacity:.85">Build selection and launching happen in the desktop launcher. This page shows live backend shop, leaderboard, and player data.</p></div>
+            <div class="stats">
+              <div class="stat"><small>INSTALLED BUILDS</small><b>Shown in desktop app</b></div>
+              <div class="stat"><small>SELECTED BUILD</small><b>Managed locally</b></div>
+              <div class="stat"><small>BACKEND STATUS</small><b id="backend-status">Checking…</b></div>
+              <div class="stat"><small>PLAYERS ONLINE</small><b id="online-count">Checking…</b></div>
+            </div>
+          </div>
+          <div class="pane" id="shop">
+            <div class="eyebrow">Live cosmetic store</div><h3 class="italic" style="font-size:28px">Item shop</h3>
+            <p class="muted shop-status" id="shop-status" role="status" aria-live="polite">Loading shop from the backend…</p>
+            <div class="shop-filters" role="group" aria-label="Filter shop items">
+              <button type="button" data-shop-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-shop-filter="outfit" aria-pressed="false">Skins</button>
+              <button type="button" data-shop-filter="emote" aria-pressed="false">Emotes</button>
+              <button type="button" data-shop-filter="pickaxe" aria-pressed="false">Pickaxes</button>
+            </div>
+            <div class="skins live-shop" id="shop-items" aria-live="polite"></div>
+          </div>
+          <div class="pane" id="board">
+            <h3 class="italic" style="font-size:28px">Arena leaderboard</h3>
+            <p class="muted" id="leaderboard-status" role="status" aria-live="polite">Loading leaderboard…</p>
+            <div class="leaderboard-scroll">
+              <table>
+                <thead><tr><th>Rank</th><th>Player</th><th>Wins</th><th>Kills</th><th>Matches</th></tr></thead>
+                <tbody id="leaderboard-items"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" aria-labelledby="f-title">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Features</div><h2 id="f-title">Everything you need<br/>to <span class="grad-text">jump in</span></h2></div>
+    <div class="grid3">
+      <div class="card feature reveal"><div class="icon">▦</div><h3>Build library</h3><p class="muted">Add, swap and manage Fortnite builds. Pick one and it's ready to launch.</p></div>
+      <div class="card feature reveal"><div class="icon">🛒</div><h3>Daily item shop</h3><p class="muted">Browse featured skins, buy with V-Bucks or gift them to a friend.</p></div>
+      <div class="card feature reveal"><div class="icon">🏆</div><h3>Arena leaderboard</h3><p class="muted">Climb divisions, stack hype and see who's on top of the ranks.</p></div>
+      <div class="card feature reveal"><div class="icon">👥</div><h3>Friends panel</h3><p class="muted">See who's online and jump into a match together in one click.</p></div>
+      <div class="card feature reveal"><div class="icon">🎨</div><h3>10 color themes</h3><p class="muted">Gold, Forest, Ocean, RGB and more — plus custom image or video wallpapers.</p></div>
+      <div class="card feature reveal"><div class="icon">🫧</div><h3>Bubble Builds & FOV</h3><p class="muted">Toggle Bubble Builds and set your field of view from 80° to 120°.</p></div>
+    </div>
+    <div class="themes reveal" aria-label="Preview accent color">
+      <button class="on" style="background:#f5c518" data-c="#f5c518,#c9a227" aria-label="Gold"></button>
+      <button style="background:#22c55e" data-c="#4ade80,#15803d" aria-label="Forest"></button>
+      <button style="background:#22d3ee" data-c="#67e8f9,#0e7490" aria-label="Ocean Blue"></button>
+      <button style="background:#f97316" data-c="#fb923c,#c2410c" aria-label="Sunset"></button>
+      <button style="background:#ef4444" data-c="#f87171,#b91c1c" aria-label="Crimson"></button>
+      <button style="background:#ec4899" data-c="#f472b6,#be185d" aria-label="Rose"></button>
+    </div>
+  </div>
+</section>
+
+<section id="how" aria-labelledby="h-title">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">How it works</div><h2 id="h-title">Three steps<br/>to <span class="grad-text">drop in</span></h2></div>
+    <div class="grid3 steps">
+      <div class="card step reveal"><div class="n">01</div><h3>Sign in with Discord</h3><p class="muted">Your account links to Discord — no new passwords.</p></div>
+      <div class="card step reveal"><div class="n">02</div><h3>Add a build</h3><p class="muted">Point the launcher at your Fortnite install folder.</p></div>
+      <div class="card step reveal"><div class="n">03</div><h3>Hit launch</h3><p class="muted">Your settings and keybinds carry over automatically.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="community" aria-labelledby="c-title">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Community</div><h2 id="c-title">Live on<br/><span class="grad-text">Project Glorp</span></h2><p class="muted">Current players connected to the backend.</p></div>
+    <div class="card reveal" style="max-width:720px;margin:0 auto;padding:28px">
+      <p id="community-online-count" role="status" aria-live="polite">Checking live player status…</p>
+      <ul id="community-player-list" class="community-player-list" aria-live="polite"></ul>
+    </div>
+  </div>
+</section>
+
+<section id="donate" aria-labelledby="d-title">
+  <div class="wrap">
+    <div class="section-head reveal"><div class="eyebrow">Support the project</div><h2 id="d-title">Donation<br/><span class="grad-text">packs</span></h2><p class="muted">Every pack keeps the servers running. Thank you, Glorper!</p></div>
+    <div class="card" style="margin:0 auto 24px;max-width:720px;text-align:center">
+      <p class="muted" id="discord-link-status" role="status" aria-live="polite">Sign in with Discord to purchase packs and view your reward codes.</p>
+      <a class="btn btn-gold" id="discord-link-button" href="./login/">Link Discord account</a>
+      <button class="btn btn-ghost" id="view-purchases" type="button">View purchases &amp; codes</button>
+      <button class="btn" id="discord-unlink-button" type="button" hidden>Sign out</button>
+    </div>
+    <div class="account-gift-form" id="gift-checkout-panel">
+      <label class="account-gift-toggle"><input id="gift-checkout-toggle" type="checkbox"> Send a pack as a gift</label>
+      <div class="account-gift-fields" id="gift-checkout-fields" hidden>
+        <label for="gift-recipient-id">Recipient's Discord user ID</label>
+        <input id="gift-recipient-id" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="Example: 123456789012345678" aria-describedby="gift-recipient-message">
+        <p class="account-gift-recipient" id="gift-recipient-message" role="status" aria-live="polite">Enter the recipient's numeric Discord ID, then verify it.</p>
+        <p class="account-gift-error" id="gift-recipient-error" role="alert" hidden></p>
+        <div class="account-gift-buttons">
+          <button class="btn btn-ghost" id="gift-recipient-check" type="button">Verify recipient</button>
+          <button class="btn btn-gold" id="gift-checkout-submit" type="button" disabled>Select “Gift this pack” on a pack</button>
+        </div>
+      </div>
+    </div>
+    <div class="packs" id="store-products" aria-live="polite">
+      <p class="muted">Loading supporter packs…</p>
+    </div>
+    <p class="store-status" id="store-status" role="status" aria-live="polite" hidden></p>
+  </div>
+</section>
+
+<section class="cta" id="download" aria-labelledby="cta-title">
+  <div class="wrap">
+    <h2 id="cta-title">Ready to <span class="grad-text">Glorp</span>?</h2>
+    <p class="muted" style="margin:16px 0 32px">Download the launcher and join the squad.</p>
+    <a class="btn btn-gold" href="./download/">▶ Download Glorp Launcher</a>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="fcols">
+      <div><div class="logo">Project <span>Glorp</span></div><p style="margin-top:12px;max-width:260px">Your builds and everything you need to jump in.</p></div>
+      <div><h4>Launcher</h4><a href="./download/">Download</a><a href="#features">Features</a><a href="#launcher">Preview</a></div>
+      <div><h4>Play</h4><a href="#">Item shop</a><a href="#">Leaderboard</a><a href="#">Builds</a></div>
+      <div><h4>Community</h4><a href="#">Discord</a><a href="#">Events</a><a href="#">Support</a></div>
+      <div><h4>Legal</h4><a href="#">Terms</a><a href="#">Privacy</a></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr"></span> Project Glorp. Not affiliated with Epic Games.</span>
+      <div class="social"><a href="#" aria-label="Discord">💬</a><a href="#" aria-label="YouTube">▶</a><a href="#" aria-label="X">𝕏</a></div></div>
+  </div>
+</footer>
+
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.getElementById('yr').textContent = new Date().getFullYear();
+const loginStatus = document.getElementById('login-status');
+const loginResult = new URLSearchParams(location.search).get('login');
+if (loginResult) {
+  loginStatus.textContent = loginResult === 'cancelled'
+    ? 'Discord sign-in was cancelled. You can try again using Log in.'
+    : loginResult === 'success'
+      ? 'You are signed in with Discord.'
+      : 'Discord sign-in did not finish. Open this site at http://localhost:8080 and check that this exact callback is registered in the Discord Developer Portal: http://localhost:8080/oauth2/callback';
+  loginStatus.hidden = false;
+}
+
+const accountMenu = document.getElementById('account-menu');
+const accountOverlay = document.getElementById('account-overlay');
+const accountOpeners = [
+  document.getElementById('nav-account'),
+  document.getElementById('drawer-account'),
+  document.getElementById('view-purchases')
+];
+let accountMenuReturnFocus = null;
+
+function closeAccountMenu(restoreFocus = true) {
+  accountMenu.classList.remove('open');
+  accountOverlay.classList.remove('open');
+  accountMenu.setAttribute('aria-hidden', 'true');
+  accountMenu.inert = true;
+  document.body.classList.remove('account-menu-open');
+  for (const opener of accountOpeners) opener.setAttribute('aria-expanded', 'false');
+  window.setTimeout(() => {
+    accountOverlay.hidden = true;
+    if (restoreFocus && accountMenuReturnFocus?.isConnected) accountMenuReturnFocus.focus();
+  }, 260);
+}
+
+function openAccountMenu(opener) {
+  accountMenuReturnFocus = opener.id === 'drawer-account'
+    ? document.getElementById('burger')
+    : opener;
+  if (opener.id === 'drawer-account') {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('burger').setAttribute('aria-expanded', 'false');
+  }
+  accountOverlay.hidden = false;
+  accountMenu.inert = false;
+  accountMenu.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('account-menu-open');
+  for (const button of accountOpeners) button.setAttribute('aria-expanded', 'true');
+  accountMenu.classList.add('open');
+  accountOverlay.classList.add('open');
+  document.getElementById('account-menu-close').focus({ preventScroll: true });
+}
+
+for (const opener of accountOpeners) {
+  opener.addEventListener('click', () => {
+    openAccountMenu(opener);
+    document.dispatchEvent(new Event('glorp:refresh-purchases'));
+  });
+}
+document.getElementById('account-menu-close').addEventListener('click', () => closeAccountMenu());
+accountOverlay.addEventListener('click', () => closeAccountMenu());
+document.querySelectorAll('[data-account-close]').forEach(link => {
+  link.addEventListener('click', () => closeAccountMenu(false));
+});
+document.addEventListener('keydown', event => {
+  if (!accountMenu.classList.contains('open')) return;
+  if (event.key === 'Escape') {
+    closeAccountMenu();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = [...accountMenu.querySelectorAll('a[href],button:not([disabled]),input:not([disabled])')]
+    .filter(element => !element.hidden && element.closest('[hidden]') === null);
+  if (!focusable.length) {
+    event.preventDefault();
+    accountMenu.focus();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+async function updateWebsiteAccount() {
+  try {
+    const response = await fetch('/api/website/account', { cache: 'no-store' });
+    if (response.status === 401) return;
+    const data = await response.json();
+    if (!response.ok || data.authenticated !== true) return;
+    const label = data.gameAccount?.username || data.discordUsername;
+    for (const [loginId, accountId] of [
+      ['nav-login', 'nav-account'],
+      ['drawer-login', 'drawer-account']
+    ]) {
+      document.getElementById(loginId).hidden = true;
+      const account = document.getElementById(accountId);
+      account.textContent = label;
+      account.setAttribute('aria-label', `Signed in as ${label}. Open account and purchases.`);
+      account.hidden = false;
+    }
+    document.getElementById('account-name').textContent = label;
+    document.getElementById('account-caption').textContent = 'Discord account connected';
+    document.getElementById('account-avatar').textContent = (label || 'G').trim().charAt(0).toUpperCase();
+    document.getElementById('account-menu-login').hidden = true;
+    document.getElementById('account-menu-logout').hidden = false;
+  } catch (error) {
+    console.error('Could not load website account status:', error);
+  }
+}
+
+async function signOutWebsiteAccount() {
+  try {
+    const response = await fetch('/api/store/discord/unlink', { method: 'POST' });
+    if (!response.ok) throw new Error('Could not sign out.');
+    location.assign('/');
+  } catch (error) {
+    loginStatus.textContent = error.message;
+    loginStatus.hidden = false;
+  }
+}
+document.getElementById('account-menu-logout').addEventListener('click', signOutWebsiteAccount);
+updateWebsiteAccount();
+
+// Store products and prices are loaded from the backend; reward settings never come from the browser.
+(() => {
+  const productGrid = document.getElementById('store-products');
+  const status = document.getElementById('store-status');
+  const discordStatus = document.getElementById('discord-link-status');
+  const discordLinkButton = document.getElementById('discord-link-button');
+  const discordUnlinkButton = document.getElementById('discord-unlink-button');
+  const ordersStatus = document.getElementById('store-orders-status');
+  const ordersList = document.getElementById('store-orders-list');
+  const giftToggle = document.getElementById('gift-checkout-toggle');
+  const giftFields = document.getElementById('gift-checkout-fields');
+  const giftRecipientInput = document.getElementById('gift-recipient-id');
+  const giftRecipientCheck = document.getElementById('gift-recipient-check');
+  const giftRecipientMessage = document.getElementById('gift-recipient-message');
+  const giftRecipientError = document.getElementById('gift-recipient-error');
+  const giftCheckoutSubmit = document.getElementById('gift-checkout-submit');
+  let selectedGiftProductId = null;
+  let verifiedRecipient = null;
+  let discordLinked = false;
+  const colors = [
+    'linear-gradient(135deg,#4ade80,#0ea5e9)',
+    'linear-gradient(135deg,#38bdf8,#a855f7)',
+    'linear-gradient(135deg,#ff5fa2,#ff8a3d)',
+    'linear-gradient(135deg,#ffd84d,#f97316)'
+  ];
+
+  const showStatus = message => {
+    status.textContent = message;
+    status.hidden = !message;
+  };
+
+  const makeText = (tag, text, className) => {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    element.textContent = text;
+    return element;
+  };
+
+  async function loadDiscordLink() {
+    const response = await fetch('/api/store/discord/status');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not check Discord link status.');
+    discordLinked = data.linked === true;
+    discordStatus.textContent = discordLinked
+      ? `Linked to Discord as ${data.username}. Buy for yourself or send a pack to another server member.`
+      : 'Link Discord to receive your reward code by direct message.';
+    discordLinkButton.hidden = discordLinked;
+    discordUnlinkButton.hidden = !discordLinked;
+  }
+
+  async function loadPurchaseHistory() {
+    const response = await fetch('/api/store/orders', { cache: 'no-store' });
+    const data = await response.json();
+    ordersList.replaceChildren();
+    if (response.status === 401) {
+      ordersStatus.textContent = 'Sign in or link the Discord account used at checkout to view your reward codes.';
+      return [];
+    }
+    if (!response.ok) throw new Error(data.error || 'Could not load your purchases.');
+
+    if (!data.purchases.length) {
+      ordersStatus.textContent = 'No purchases are linked to this Discord account yet. Paid purchases will appear here after Stripe confirms them.';
+      return [];
+    }
+
+    ordersStatus.textContent = 'Your reward codes are private to your signed-in Discord account. You can redeem each code in the launcher.';
+    data.purchases.forEach(purchase => {
+      const card = document.createElement('article');
+      card.className = 'account-order-card';
+      const top = document.createElement('div');
+      top.className = 'account-order-top';
+      const title = document.createElement('div');
+      title.append(makeText('div', purchase.productName, 'account-order-title'));
+      if (purchase.purchasedAt) {
+        const purchasedAt = new Date(purchase.purchasedAt);
+        if (!Number.isNaN(purchasedAt.valueOf())) {
+          const time = document.createElement('time');
+          time.className = 'account-order-date';
+          time.dateTime = purchasedAt.toISOString();
+          time.textContent = new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          }).format(purchasedAt);
+          title.append(time);
+        }
+      }
+      top.append(title);
+      if (purchase.isGift) top.append(makeText('span', 'Gift received', 'account-order-status'));
+      card.append(top);
+      const statusText = {
+        ready: 'Ready to redeem',
+        processing: 'Payment received; reward is still processing',
+        redeemed: 'Already redeemed',
+        expired: 'Expired',
+        cancelled: 'Cancelled'
+      }[purchase.codeStatus] || 'Status unavailable';
+      card.append(makeText('p', statusText, 'account-order-status'));
+      if (purchase.code) {
+        const codeRow = document.createElement('div');
+        codeRow.className = 'account-order-code';
+        const code = document.createElement('code');
+        code.textContent = purchase.code;
+        codeRow.append(code);
+        const copy = makeText('button', 'Copy', 'account-copy-code');
+        copy.type = 'button';
+        copy.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(purchase.code);
+            copy.textContent = 'Copied';
+          } catch (error) {
+            ordersStatus.textContent = 'Copy was blocked by this browser. Select the code and copy it manually.';
+          }
+        });
+        codeRow.append(copy);
+        card.append(codeRow);
+      }
+      ordersList.append(card);
+    });
+    return data.purchases;
+  }
+
+  document.addEventListener('glorp:refresh-purchases', () => {
+    loadPurchaseHistory().catch(error => {
+      ordersStatus.textContent = error.message;
+    });
+  });
+
+  async function loadProducts() {
+    try {
+      await loadDiscordLink();
+      try {
+        await loadPurchaseHistory();
+      } catch (error) {
+        ordersStatus.textContent = error.message;
+      }
+      const response = await fetch('/api/store/config');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not load supporter packs.');
+      productGrid.replaceChildren();
+
+      data.products.forEach((product, index) => {
+        const card = document.createElement('article');
+        card.className = `card pack in${product.popular ? ' pop' : ''}`;
+        card.style.setProperty('--pc', colors[index % colors.length]);
+        if (product.popular) card.append(makeText('span', 'POPULAR', 'tag'));
+        card.append(makeText('div', product.badge || '✦', 'badge'));
+        card.append(makeText('h3', product.name));
+        const price = makeText('div',
+          new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: data.currency.toUpperCase()
+          }).format(product.priceCents / 100),
+          'price');
+        card.append(price);
+        if (product.description) card.append(makeText('p', product.description, 'muted'));
+
+        const features = document.createElement('ul');
+        product.features.forEach(feature => features.append(makeText('li', feature)));
+        card.append(features);
+
+        const button = makeText('button',
+          product.available ? (discordLinked ? 'Buy with card' : 'Link Discord first') : 'Unavailable',
+          'btn buy-pack');
+        button.type = 'button';
+        button.dataset.productId = product.id;
+        button.disabled = !product.available || !discordLinked;
+        card.append(button);
+        const giftButton = makeText('button',
+          product.available ? 'Gift this pack' : 'Unavailable',
+          'btn btn-ghost buy-pack gift-pack');
+        giftButton.type = 'button';
+        giftButton.dataset.productId = product.id;
+        giftButton.dataset.gift = 'true';
+        giftButton.disabled = !product.available || !discordLinked;
+        card.append(giftButton);
+        productGrid.append(card);
+      });
+
+      const query = new URLSearchParams(location.search);
+      showStatus(query.get('discord_link') === 'success'
+        ? 'Discord linked. Choose a pack to continue.'
+        : query.get('discord_link') === 'failed'
+          ? 'Discord linking failed. Please try again.'
+          : query.get('discord_link') === 'cancelled'
+            ? 'Discord linking was cancelled.'
+            : query.has('session_id')
+                    ? 'Payment completed. Your code will appear in the account menu after Stripe confirms the payment.'
+              : data.status || (data.products.some(product => product.available)
+                ? discordLinked ? '' : 'Link your Discord account before buying a pack.'
+                : 'Packs are not available yet. Configure the store and each pack reward in Website/store-config.json.'));
+    } catch (error) {
+      productGrid.replaceChildren(makeText('p', error.message, 'store-status'));
+    }
+  }
+
+  async function startCheckout(productId, recipientDiscordId, button) {
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Opening secure checkout…';
+    }
+    showStatus('');
+    try {
+      const response = await fetch('/api/store/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          ...(recipientDiscordId ? { gift: true, recipientDiscordId } : {})
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not start checkout.');
+      location.assign(data.url);
+    } catch (error) {
+      showStatus(error.message);
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Try again';
+      }
+    }
+  }
+
+  giftToggle.addEventListener('change', () => {
+    giftFields.hidden = !giftToggle.checked;
+    if (!giftToggle.checked) {
+      selectedGiftProductId = null;
+      verifiedRecipient = null;
+      giftCheckoutSubmit.disabled = true;
+      giftCheckoutSubmit.textContent = 'Select “Gift this pack” on a pack';
+      giftRecipientError.hidden = true;
+    }
+  });
+
+  giftRecipientInput.addEventListener('input', () => {
+    verifiedRecipient = null;
+    giftCheckoutSubmit.disabled = true;
+    giftRecipientMessage.textContent = 'Verify the recipient again after changing the ID.';
+    giftRecipientError.hidden = true;
+  });
+
+  giftRecipientCheck.addEventListener('click', async () => {
+    const discordId = giftRecipientInput.value.trim();
+    verifiedRecipient = null;
+    giftCheckoutSubmit.disabled = true;
+    giftRecipientError.hidden = true;
+    giftRecipientCheck.disabled = true;
+    giftRecipientCheck.textContent = 'Checking…';
+    try {
+      const response = await fetch('/api/store/discord/recipient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discordId })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not verify this recipient.');
+      verifiedRecipient = data.recipient;
+      giftRecipientMessage.textContent = `Verified: ${data.recipient.username} (${data.recipient.discordId})`;
+      giftCheckoutSubmit.disabled = !selectedGiftProductId;
+      if (selectedGiftProductId) giftCheckoutSubmit.textContent = 'Continue to secure checkout';
+    } catch (error) {
+      giftRecipientError.textContent = error.message;
+      giftRecipientError.hidden = false;
+      giftRecipientMessage.textContent = 'Recipient was not verified.';
+    } finally {
+      giftRecipientCheck.disabled = false;
+      giftRecipientCheck.textContent = 'Verify recipient';
+    }
+  });
+
+  giftCheckoutSubmit.addEventListener('click', async () => {
+    if (!giftToggle.checked || !verifiedRecipient || !selectedGiftProductId) return;
+    await startCheckout(selectedGiftProductId, verifiedRecipient.discordId, giftCheckoutSubmit);
+  });
+
+  productGrid.addEventListener('click', async event => {
+    const button = event.target.closest('.buy-pack');
+    if (!button || button.disabled) return;
+    if (button.dataset.gift === 'true') {
+      selectedGiftProductId = button.dataset.productId;
+      giftToggle.checked = true;
+      giftFields.hidden = false;
+      giftCheckoutSubmit.disabled = !verifiedRecipient;
+      giftCheckoutSubmit.textContent = verifiedRecipient
+        ? 'Continue to secure checkout'
+        : 'Verify recipient to continue';
+      document.getElementById('gift-checkout-panel').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      if (!verifiedRecipient) giftRecipientInput.focus({ preventScroll: true });
+      return;
+    }
+    await startCheckout(button.dataset.productId, null, button);
+  });
+
+  discordUnlinkButton.addEventListener('click', async () => {
+    discordUnlinkButton.disabled = true;
+    try {
+      const response = await fetch('/api/store/discord/unlink', { method: 'POST' });
+      if (!response.ok) throw new Error('Could not unlink your Discord account.');
+      location.assign('/');
+      return;
+    } catch (error) {
+      showStatus(error.message);
+    } finally {
+      discordUnlinkButton.disabled = false;
+    }
+  });
+
+  loadProducts().then(() => {
+    const checkoutSessionId = new URLSearchParams(location.search).get('session_id');
+    if (!checkoutSessionId) return;
+
+    let attempts = 0;
+    const pollTimer = setInterval(async () => {
+      attempts += 1;
+      try {
+        const purchases = await loadPurchaseHistory();
+        if (purchases.some(purchase => purchase.sessionId === checkoutSessionId)) {
+          clearInterval(pollTimer);
+          history.replaceState(null, '', `${location.pathname}#donate`);
+          showStatus('Payment confirmed. Your reward code is available in the account menu.');
+          openAccountMenu(document.getElementById('view-purchases'));
+        } else if (attempts >= 12) {
+          clearInterval(pollTimer);
+          showStatus('Payment completed, but the reward is still processing. Your account menu will update after confirmation.');
+        }
+      } catch (error) {
+        if (attempts >= 12) {
+          clearInterval(pollTimer);
+          showStatus(error.message);
+        }
+      }
+    }, 3000);
+  }).catch(error => {
+    showStatus(error.message);
+  });
+})();
+
+// Load live shop, leaderboard, and backend state from this website's backend.
+(() => {
+  const shopGrid = document.getElementById('shop-items');
+  const shopStatus = document.getElementById('shop-status');
+  const leaderboardBody = document.getElementById('leaderboard-items');
+  const leaderboardStatus = document.getElementById('leaderboard-status');
+  const backendStatus = document.getElementById('backend-status');
+  const onlineCount = document.getElementById('online-count');
+  const assistantResults = document.getElementById('assistant-results');
+  const assistantConfig = document.getElementById('assistant-config');
+  const assistantConversation = document.getElementById('assistant-conversation');
+  const assistantAnswer = document.getElementById('assistant-answer');
+  const assistantMatches = document.getElementById('assistant-matches');
+  const assistantClear = document.getElementById('assistant-clear');
+  const cosmeticDialog = document.getElementById('cosmetic-dialog');
+  const cosmeticDetailContent = document.getElementById('cosmetic-detail-content');
+  const searchForm = document.getElementById('heroSearch');
+  const searchInput = document.getElementById('q');
+  const numberFormat = new Intl.NumberFormat();
+  let shopItems = [];
+  let assistantHistory = [];
+  let activePane = 'home';
+  let activeShopFilter = 'all';
+
+  const makeText = (tag, value, className) => {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    element.textContent = value;
+    return element;
+  };
+
+  async function loadBackendStatus() {
+    try {
+      const response = await fetch('/api/website/status');
+      if (!response.ok) throw new Error('Backend unavailable');
+      const data = await response.json();
+      if (data.status !== 'online') throw new Error('Backend unavailable');
+      backendStatus.textContent = 'Online';
+      backendStatus.style.color = 'var(--green)';
+      onlineCount.textContent = numberFormat.format(Number(data.onlinePlayers) || 0);
+      onlineCount.style.color = 'var(--green)';
+    } catch {
+      backendStatus.textContent = 'Offline';
+      backendStatus.style.color = '#f87171';
+      onlineCount.textContent = 'Unavailable';
+    }
+  }
+
+  async function searchAssistant(query) {
+    assistantResults.hidden = false;
+    assistantAnswer.hidden = false;
+    assistantAnswer.textContent = 'Thinking and searching the web…';
+    assistantMatches.replaceChildren();
+    assistantMatches.hidden = true;
+    try {
+      const response = await fetch('/api/website/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, history: assistantHistory })
+      });
+      const contentType = response.headers.get('content-type') || '';
+      const responseText = await response.text();
+      if (!/\bjson\b/i.test(contentType)) {
+        if (/^\s*(?:<!doctype\s+html|<html\b)/i.test(responseText) || /text\/html/i.test(contentType)) {
+          throw new Error('The assistant API returned a web page instead of data. Restart the backend to load the latest website API.');
+        }
+        throw new Error('The assistant received an invalid response. Please try again shortly.');
+      }
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error('The assistant returned invalid data. Please try again shortly.');
+      }
+      if (!response.ok) throw new Error(data.error || 'The assistant could not complete that search.');
+      assistantAnswer.hidden = true;
+      const turn = document.createElement('article');
+      turn.className = 'assistant-turn';
+      turn.append(makeText('p', query, 'assistant-question'));
+      turn.append(makeText('p', data.response, 'assistant-turn-answer'));
+
+      const citations = Array.isArray(data.citations) ? data.citations : [];
+      if (citations.length) {
+        const sources = document.createElement('div');
+        sources.className = 'assistant-sources';
+        citations.forEach(citation => {
+          if (typeof citation.url !== 'string' || !/^https?:\/\//i.test(citation.url)) return;
+          const link = makeText('a', citation.title || new URL(citation.url).hostname, 'assistant-source');
+          link.href = citation.url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          sources.append(link);
+        });
+        if (sources.childElementCount) turn.append(sources);
+      }
+
+      if (Array.isArray(data.players) && data.players.length) {
+        const players = document.createElement('ul');
+        players.className = 'community-player-list';
+        data.players.forEach(player => {
+          const row = document.createElement('li');
+          row.className = 'assistant-result';
+          row.append(makeText('span', '●', 'online-dot'), makeText('span', player));
+          players.append(row);
+        });
+        turn.append(players);
+      }
+
+      assistantConversation.append(turn);
+      if (data.lookupAvailable === false) {
+        turn.append(makeText('p', 'Public reference lookup is temporarily unavailable; this answer may rely on the AI model’s general knowledge.', 'muted'));
+      }
+      assistantConversation.scrollTop = assistantConversation.scrollHeight;
+      assistantHistory.push({ role: 'user', text: query }, { role: 'assistant', text: data.response });
+      assistantHistory = assistantHistory.slice(-16);
+
+      (Array.isArray(data.items) ? data.items : []).forEach(item => {
+        const row = document.createElement('li');
+        row.className = 'assistant-result';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'assistant-item-button';
+        button.dataset.cosmeticId = item.id;
+        if (typeof item.image === 'string' && /^https:\/\//i.test(item.image)) {
+          const image = document.createElement('img');
+          image.src = item.image;
+          image.alt = '';
+          image.loading = 'lazy';
+          button.append(image);
+        }
+        const details = document.createElement('span');
+        details.append(makeText('b', item.name));
+        details.append(makeText('small', `${item.type} · ${item.rarity}`));
+        details.append(makeText('small', item.inShop
+          ? `In shop · ${numberFormat.format(Number(item.price) || 0)} V-Bucks`
+          : 'View catalog details'));
+        button.append(details);
+        row.append(button);
+        assistantMatches.append(row);
+      });
+      assistantMatches.hidden = assistantMatches.childElementCount === 0;
+    } catch (error) {
+      assistantAnswer.hidden = false;
+      assistantAnswer.textContent = error.message;
+    }
+  }
+
+  function showCosmeticDetails(item) {
+    cosmeticDetailContent.replaceChildren();
+    const layout = document.createElement('div');
+    layout.className = 'cosmetic-detail';
+    const artwork = document.createElement('div');
+    artwork.className = 'cosmetic-detail-image';
+    const imageUrl = item.images?.featured || item.images?.icon || item.images?.smallIcon || item.icon;
+    if (typeof imageUrl === 'string' && /^https:\/\//i.test(imageUrl)) {
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = item.name;
+      image.onerror = () => image.remove();
+      artwork.append(image);
+    }
+
+    const copy = document.createElement('section');
+    copy.className = 'cosmetic-detail-copy';
+    const close = makeText('button', 'Close', 'cosmetic-detail-close');
+    close.type = 'button';
+    close.addEventListener('click', () => cosmeticDialog.close());
+    copy.append(close);
+    copy.append(makeText('p', item.type.toUpperCase(), 'eyebrow'));
+    copy.append(makeText('h2', item.name));
+    copy.append(makeText('p', `${item.series ? `${item.series} · ` : ''}${item.rarity}`));
+    if (item.description) copy.append(makeText('p', item.description, 'muted'));
+    if (item.price !== null && item.price !== undefined) {
+      copy.append(makeText('p', `${item.inShop ? 'In the current shop' : 'Typical price'} · ${numberFormat.format(Number(item.price) || 0)} V-Bucks`));
+    }
+    if (item.release) copy.append(makeText('p', `Introduced: ${item.release}`, 'muted'));
+    if (item.added) copy.append(makeText('p', `Catalog date: ${new Date(item.added).toLocaleDateString()}`, 'muted'));
+
+    const variants = Array.isArray(item.variants) ? item.variants.filter(variant => variant.options?.length) : [];
+    if (variants.length) {
+      const groups = document.createElement('div');
+      groups.className = 'cosmetic-variants';
+      variants.forEach(variant => {
+        const group = document.createElement('div');
+        group.className = 'cosmetic-variant';
+        group.append(makeText('b', variant.name));
+        const options = document.createElement('div');
+        options.className = 'cosmetic-variant-options';
+        variant.options.forEach(option => {
+          const optionButton = makeText('button', option.name, 'cosmetic-variant-option');
+          optionButton.type = 'button';
+          if (typeof option.image === 'string' && /^https:\/\//i.test(option.image)) {
+            optionButton.dataset.variantImage = option.image;
+          }
+          options.append(optionButton);
+        });
+        group.append(options);
+        groups.append(group);
+      });
+      copy.append(groups);
+    }
+    layout.append(artwork, copy);
+    cosmeticDetailContent.append(layout);
+    if (!cosmeticDialog.open) cosmeticDialog.showModal();
+  }
+
+  assistantMatches.addEventListener('click', async event => {
+    const button = event.target.closest('[data-cosmetic-id]');
+    if (!button) return;
+    button.disabled = true;
+    try {
+      const response = await fetch(`/api/website/cosmetics/${encodeURIComponent(button.dataset.cosmeticId)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not load this cosmetic.');
+      showCosmeticDetails(data.item);
+    } catch (error) {
+      assistantAnswer.hidden = false;
+      assistantAnswer.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  cosmeticDetailContent.addEventListener('click', event => {
+    const option = event.target.closest('[data-variant-image]');
+    if (!option) return;
+    const image = cosmeticDetailContent.querySelector('.cosmetic-detail-image img');
+    if (image) image.src = option.dataset.variantImage;
+  });
+
+  assistantClear.addEventListener('click', () => {
+    assistantHistory = [];
+    assistantConversation.replaceChildren();
+    assistantMatches.replaceChildren();
+    assistantMatches.hidden = true;
+    assistantAnswer.hidden = true;
+    assistantResults.hidden = true;
+  });
+
+  async function checkAssistantConfiguration() {
+    try {
+      const response = await fetch('/api/website/assistant/status', { cache: 'no-store' });
+      const data = await response.json();
+      assistantConfig.hidden = data.configured === true;
+    } catch {
+      assistantConfig.hidden = true;
+    }
+  }
+
+  async function refreshCommunityPlayers() {
+    const count = document.getElementById('community-online-count');
+    const players = document.getElementById('community-player-list');
+    try {
+      const response = await fetch('/api/website/online', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error('Could not load live player status.');
+      const onlineCount = Number(data.count) || 0;
+      count.textContent = `${numberFormat.format(onlineCount)} player${onlineCount === 1 ? '' : 's'} online`;
+      players.replaceChildren();
+      if (!Array.isArray(data.players) || data.players.length === 0) {
+        players.append(makeText('li', 'No public players are online right now.', 'muted'));
+        return;
+      }
+      data.players.forEach(player => {
+        const row = document.createElement('li');
+        row.className = 'assistant-result';
+        row.append(makeText('span', '●', 'online-dot'));
+        row.append(makeText('span', player));
+        players.append(row);
+      });
+    } catch {
+      count.textContent = 'Live player status is unavailable right now.';
+      players.replaceChildren();
+    }
+  }
+
+  function renderShop(query = '') {
+    const search = query.trim().toLowerCase();
+    const visibleItems = shopItems.filter(item => {
+      const matchesType = activeShopFilter === 'all' || item.type === activeShopFilter;
+      const matchesSearch = !search || `${item.name} ${item.rarity} ${item.type}`.toLowerCase().includes(search);
+      return matchesType && matchesSearch;
+    });
+
+    shopGrid.replaceChildren();
+    if (visibleItems.length === 0) {
+      shopGrid.append(makeText('p', 'No shop items match that search.', 'muted'));
+      shopStatus.textContent = shopItems.length
+        ? `${shopItems.length} live offers · no matching items`
+        : 'No shop items are currently available.';
+      return;
+    }
+
+    visibleItems.forEach(item => {
+      const card = document.createElement('article');
+      card.className = 'skin live-skin';
+      const artwork = document.createElement('div');
+      artwork.className = 'art';
+      const imageUrl = item.images?.featured || item.images?.icon || item.images?.smallIcon || item.icon;
+      if (typeof imageUrl === 'string' && /^https:\/\//i.test(imageUrl)) {
+        const image = document.createElement('img');
+        image.src = imageUrl;
+        image.alt = item.name;
+        image.loading = 'lazy';
+        image.onerror = () => image.remove();
+        artwork.append(image);
+      } else {
+        artwork.append(makeText('span', item.type === 'emote' ? '💃' : item.type === 'pickaxe' ? '⛏️' : '🎭'));
+      }
+
+      const metadata = document.createElement('div');
+      metadata.className = 'meta';
+      metadata.append(makeText('b', item.name));
+      metadata.append(document.createElement('br'));
+      metadata.append(makeText('small', `${item.type.toUpperCase()} · ${item.rarity}`));
+      metadata.append(makeText('div', `${numberFormat.format(Number(item.price) || 0)} V-Bucks`));
+      card.append(artwork, metadata);
+      shopGrid.append(card);
+    });
+    shopStatus.textContent = `${visibleItems.length} of ${shopItems.length} live offers`;
+  }
+
+  async function loadShop() {
+    try {
+      shopStatus.textContent = 'Loading live shop…';
+      const response = await fetch('/api/website/item-shop');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not load the item shop.');
+      if (!data.sections || typeof data.sections !== 'object') throw new Error('The item shop response was invalid.');
+      shopItems = Object.values(data.sections).flat().filter(item =>
+        item && typeof item.name === 'string' && typeof item.type === 'string'
+      );
+      renderShop();
+    } catch (error) {
+      shopStatus.textContent = error.message;
+      shopGrid.replaceChildren();
+    }
+  }
+
+  async function loadLeaderboard(search = '') {
+    try {
+      leaderboardStatus.textContent = 'Loading leaderboard…';
+      const params = new URLSearchParams({ playlist: 'solo', type: 'placetop1', limit: '10' });
+      if (search) params.set('search', search);
+      const response = await fetch(`/api/website/leaderboard?${params}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not load the leaderboard.');
+      if (!Array.isArray(data)) throw new Error('The leaderboard response was invalid.');
+
+      leaderboardBody.replaceChildren();
+      if (data.length === 0) {
+        const row = document.createElement('tr');
+        const cell = makeText('td', 'No players found.', 'muted');
+        cell.colSpan = 5;
+        row.append(cell);
+        leaderboardBody.append(row);
+      } else {
+        data.forEach(entry => {
+          const row = document.createElement('tr');
+          const rank = Number(entry.rank) || 0;
+          row.append(
+            makeText('td', rank > 0 ? `#${rank}` : '—'),
+            makeText('td', typeof entry.username === 'string' ? entry.username : 'Player'),
+            makeText('td', numberFormat.format(Number(entry.wins) || 0)),
+            makeText('td', numberFormat.format(Number(entry.kills) || 0)),
+            makeText('td', numberFormat.format(Number(entry.matches) || 0)),
+          );
+          leaderboardBody.append(row);
+        });
+      }
+      leaderboardStatus.textContent = search
+        ? `Results for “${search}”`
+        : `Top ${data.length} solo players`;
+    } catch (error) {
+      leaderboardStatus.textContent = error.message;
+      leaderboardBody.replaceChildren();
+    }
+  }
+
+  document.querySelectorAll('.rail button').forEach(button => {
+    button.addEventListener('click', () => {
+      activePane = button.dataset.pane;
+      if (activePane === 'board') loadLeaderboard(searchInput.value.trim());
+    });
+  });
+
+  document.querySelectorAll('[data-shop-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      activeShopFilter = button.dataset.shopFilter;
+      document.querySelectorAll('[data-shop-filter]').forEach(filterButton =>
+        filterButton.setAttribute('aria-pressed', String(filterButton === button))
+      );
+      renderShop(searchInput.value);
+    });
+  });
+
+  searchInput.addEventListener('input', () => {
+    if (activePane === 'shop') renderShop(searchInput.value);
+  });
+
+  searchForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const query = searchInput.value.trim();
+    if (activePane === 'board') {
+      loadLeaderboard(query);
+      return;
+    }
+    if (activePane === 'shop') {
+      renderShop(query);
+      return;
+    }
+    searchAssistant(query);
+  });
+
+  loadBackendStatus();
+  checkAssistantConfiguration();
+  refreshCommunityPlayers();
+  setInterval(refreshCommunityPlayers, 30000);
+  loadShop();
+  loadLeaderboard();
+})();
+
+// Mobile drawer
+const burger = document.getElementById('burger'), drawer = document.getElementById('drawer');
+burger.onclick = () => { const o = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', o); };
+drawer.querySelectorAll('a').forEach(a => a.onclick = () => drawer.classList.remove('open'));
+
+
+// Star field: one fixed canvas for the whole page
+const stars = (() => {
+  const cv = document.getElementById('stars'), ctx = cv.getContext('2d');
+  const lowPower = (navigator.hardwareConcurrency||8) <= 4 || (navigator.deviceMemory||8) <= 4;
+  const touch = matchMedia('(hover: none), (pointer: coarse)').matches;
+  let w = 0, h = 0, dpr = 1, list = [], bursts = [], raf = 0, color = '245,197,66', mx = -9999, my = -9999;
+  const count = () => { let n = innerWidth < 768 ? 50 : Math.min(180, Math.round(140 * (innerWidth*innerHeight) / (1440*900))); n = Math.max(innerWidth < 768 ? 50 : 100, n); if (innerWidth >= 768) n = Math.min(180, n); return lowPower ? Math.round(n/2) : n; };
+  function size(){
+    const ow = w, oh = h; dpr = Math.min(devicePixelRatio||1, lowPower ? 1 : 2); w = innerWidth; h = innerHeight;
+    cv.width = w*dpr; cv.height = h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    if (ow && oh) list.forEach(p => { const sx = w/ow, sy = h/oh; p.hx *= sx; p.hy *= sy; p.x *= sx; p.y *= sy; });
+  }
+  function spawn(){ const n = count(); while (list.length < n){ const a = Math.random()*6.283, sp = .05 + Math.random()*.1, x = Math.random()*w, y = Math.random()*h;
+      list.push({hx:x,hy:y,x,y,vx:0,vy:0,dx:Math.cos(a)*sp,dy:Math.sin(a)*sp,r:.6+Math.random()*1.4,tw:Math.random()*6.283}); }
+    list.length = n; }
+  function draw(t){
+    ctx.clearRect(0,0,w,h);
+    for (let i=0;i<list.length;i++) for (let j=i+1;j<list.length;j++){
+      const a = list[i], b = list[j], dx = a.x-b.x, dy = a.y-b.y; if (Math.abs(dx) > 130 || Math.abs(dy) > 130) continue;
+      const d = Math.sqrt(dx*dx+dy*dy); if (d < 130){ ctx.strokeStyle = `rgba(${color},${.12*(1-d/130)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+    }
+    for (const p of list){ const al = .55 + .35*Math.sin(t/900 + p.tw); ctx.fillStyle = `rgba(${color},${al})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill(); }
+    for (const b of bursts){ const k = 1 - (t-b.t0)/900; if (k <= 0) continue; ctx.fillStyle = `rgba(${color},${k})`; ctx.beginPath(); ctx.arc(b.x,b.y,b.r*k,0,6.283); ctx.fill(); }
+  }
+  function step(t){
+    for (const p of list){
+      p.hx += p.dx; p.hy += p.dy;
+      if (p.hx < -10){ p.hx += w+20; p.x += w+20; } else if (p.hx > w+10){ p.hx -= w+20; p.x -= w+20; }
+      if (p.hy < -10){ p.hy += h+20; p.y += h+20; } else if (p.hy > h+10){ p.hy -= h+20; p.y -= h+20; }
+      if (!touch){ const dx = p.x-mx, dy = p.y-my, d = Math.hypot(dx,dy); if (d < 110 && d > .1){ const f = (1-d/110)*1.6; p.vx += dx/d*f; p.vy += dy/d*f; } }
+      p.vx = (p.vx + (p.hx-p.x)*.02) * .9; p.vy = (p.vy + (p.hy-p.y)*.02) * .9; p.x += p.vx; p.y += p.vy;
+    }
+    bursts = bursts.filter(b => t-b.t0 < 900); for (const b of bursts){ b.x += b.vx; b.y += b.vy; b.vx *= .96; b.vy *= .96; }
+    draw(t); raf = requestAnimationFrame(step);
+  }
+  const onMove = e => { mx = e.clientX; my = e.clientY; };
+  const onLeave = () => { mx = my = -9999; };
+  const onDown = e => { const n = 12 + Math.floor(Math.random()*5), t0 = performance.now(); for (let i=0;i<n;i++){ const a = Math.random()*6.283, sp = 1.5+Math.random()*3; bursts.push({x:e.clientX,y:e.clientY,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:1.2+Math.random()*1.6,t0}); } };
+  const onVis = () => { cancelAnimationFrame(raf); if (!document.hidden && !reduce) raf = requestAnimationFrame(step); };
+  const onResize = () => { size(); spawn(); if (reduce) draw(0); };
+  size(); spawn();
+  addEventListener('resize', onResize);
+  if (reduce){ draw(0); }
+  else {
+    if (!touch){ addEventListener('pointermove', onMove, {passive:true}); document.addEventListener('pointerleave', onLeave); }
+    addEventListener('pointerdown', onDown, {passive:true});
+    document.addEventListener('visibilitychange', onVis);
+    raf = requestAnimationFrame(step);
+  }
+  return {
+    setColor(c){ color = c; if (reduce) draw(0); },
+    destroy(){ cancelAnimationFrame(raf); removeEventListener('resize', onResize); removeEventListener('pointermove', onMove); document.removeEventListener('pointerleave', onLeave); removeEventListener('pointerdown', onDown); document.removeEventListener('visibilitychange', onVis); }
+  };
+})();
+addEventListener('pagehide', () => stars.destroy());
+
+// Typewriter in search bar
+(() => {
+  const input = document.getElementById('q'), ov = document.querySelector('.overlay');
+  const prompts = ['search "Mogul Master" in the item shop', 'find my friends online', 'who is #1 on the arena leaderboard?'];
+  if (reduce){ input.placeholder = prompts[0]; return; }
+  let i = 0, stop = false, last = '';
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  input.addEventListener('focus', () => { stop = true; ov.innerHTML = ''; input.placeholder = last; });
+  (async function run(){
+    while (!stop){
+      const t = prompts[i]; last = t;
+      for (const ch of t){ if (stop) return; const s = document.createElement('span'); s.textContent = ch; ov.appendChild(s); await wait(70+Math.random()*50); }
+      await wait(1600);
+      for (const sp of [...ov.children].reverse()){ if (stop) return; sp.classList.add('out'); setTimeout(()=>sp.remove(),350); await wait(30); }
+      await wait(400);
+      i = (i+1) % prompts.length;
+    }
+  })();
+})();
+
+// Launcher tabs
+document.querySelectorAll('.rail button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.rail button').forEach(x => x.classList.toggle('on', x===b));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id===b.dataset.pane));
+});
+// Theme swatches
+document.querySelectorAll('.themes button').forEach(b => b.onclick = () => {
+  const [a, c] = b.dataset.c.split(',');
+  document.documentElement.style.setProperty('--gold', a);
+  document.documentElement.style.setProperty('--grad', `linear-gradient(135deg,${a},${c})`);
+  const rgb = a.match(/\w\w/g).map(h => parseInt(h,16)).join(',');
+  stars.setColor(rgb);
+  
+  document.querySelectorAll('.themes button').forEach(x => x.classList.toggle('on', x===b));
+});
+
+// Hero word rise
+(() => { const h = document.getElementById('hero-title'); if (reduce) return; let k = 0;
+  h.querySelectorAll(':scope > span, :scope').forEach(()=>{});
+  const walk = n => [...n.childNodes].forEach(c => { if (c.nodeType === 3){ const f = document.createDocumentFragment(); c.textContent.split(/(\s+)/).forEach(t => { if (!t.trim()) { f.append(t); return; } const s = document.createElement('span'); s.className = 'w'; s.textContent = t; s.style.animationDelay = (1.3 + k++*.09) + 's'; f.append(s); }); c.replaceWith(f); } else if (c.classList && c.classList.contains('grad-text')){ c.classList.add('w'); c.style.animationDelay = (1.3 + k++*.09) + 's'; } else if (c.nodeName !== 'BR') walk(c); });
+  walk(h); })();
+// Scroll progress
+addEventListener('scroll', () => { document.getElementById('sb').style.width = (scrollY/(document.body.scrollHeight-innerHeight)*100) + '%'; }, {passive:true});
+// 3D tilt (max 11deg) on the launcher window, feature and pack cards
+(() => {
+  const ok = matchMedia('(hover: hover) and (pointer: fine)').matches && !reduce;
+  document.querySelectorAll('.frame, .feature, .pack').forEach(el => {
+    const outer = document.createElement('div'), persp = document.createElement('div');
+    outer.className = 'tilt-o' + (el.classList.contains('reveal') ? ' reveal' : ''); el.classList.remove('reveal');
+    persp.className = 'tilt-p'; el.replaceWith(outer); outer.append(persp); persp.append(el);
+    el.classList.add('tilt-s'); const sh = document.createElement('div'); sh.className = 'sheen'; sh.setAttribute('aria-hidden','true'); el.append(sh);
+    if (!ok) return;
+    const max = 11;
+    persp.addEventListener('pointermove', e => {
+      const r = persp.getBoundingClientRect(), px = (e.clientX-r.left)/r.width, py = (e.clientY-r.top)/r.height;
+      const nx = px*2-1, ny = py*2-1;
+      el.classList.add('hov');
+      el.style.transform = `rotateX(${-ny*max}deg) rotateY(${nx*max}deg)`;
+      el.style.setProperty('--sheen-x', px*100+'%'); el.style.setProperty('--sheen-y', py*100+'%');
+      el.style.setProperty('--mx', px*100+'%'); el.style.setProperty('--my', py*100+'%');
+    });
+    persp.addEventListener('pointerleave', () => { el.classList.remove('hov'); el.style.transform = 'rotateX(0deg) rotateY(0deg)'; });
+  });
+})();
+// Scroll reveal (staggered)
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.15});
+document.querySelectorAll('.reveal').forEach((el, k) => { el.style.transitionDelay = (k%6)*80 + 'ms'; io.observe(el); });
+</script>
+</body>
+</html>
