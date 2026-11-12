@@ -4,4 +4,6 @@ This repository contains only the public static website frontend for GitHub Page
 
 The static site is a visual frontend preview. Discord sign-in, live player data, assistant search, supporter-pack checkout, gifting, and private code history require a separately hosted HTTPS backend and are unavailable until that service is deployed and connected.
 
+The site includes dedicated `/launcher/`, `/community/`, and `/donation/` pages. Launcher downloads use the Windows installer in `/download/`.
+
 GitHub Pages deploys this site automatically from `main` using the workflow in `.github/workflows/pages.yml`.
